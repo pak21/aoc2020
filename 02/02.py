@@ -24,6 +24,7 @@ def valid2(rule):
 
 rules = [extract(text) for text in rules_text]
 is_valid = [valid(rule) for rule in rules]
+is_valid2 = [valid2(rule) for rule in rules]
 
 print(sum(is_valid))
 print(sum(is_valid2))
