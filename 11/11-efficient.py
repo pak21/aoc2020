@@ -37,11 +37,13 @@ neighbours = list(map(
 
 # Now we can iterate
 
+# After one generation, all seats are occupied so just start with that instead
+
+occupied = seats
+prev_count = len(occupied)
+
 def is_occupied_next(currently_occupied, neighbours):
     return neighbours < 4 if currently_occupied else neighbours == 0
-
-occupied = set()
-prev_count = 0
 
 while True:
     occupied = set(map(
