@@ -6,36 +6,33 @@ import sys
 
 import numpy as np
 
-with open(sys.argv[1]) as f:
-    fields_text, ticket_text, nearby_text = f.read().strip().split('\n\n')
-
 def parse_field(l):
     match = re.match(r'^(.+): ([0-9]+)-([0-9]+) or ([0-9]+)-([0-9]+)$', l)
     groups = list(match.groups())
-    return (groups[0], list(map(int, groups[1:])))
-
-fields = list(map(parse_field, fields_text.split('\n')))
+    return {'name': groups[0], 'limits': list(map(int, groups[1:]))}
 
 def parse_ticket(l):
     return list(map(int, l.split(',')))
 
-ticket = parse_ticket(ticket_text.split('\n')[1])
-
-nearby = np.array(list(map(parse_ticket, nearby_text.split('\n')[1:])))
-
-# Part 1
-
-def is_valid_field(field, value):
-    limits = field[1]
+def is_valid_field(limits, value):
     return (value >= limits[0] and value <= limits[1]) or (value >= limits[2] and value <= limits[3])
 
+with open(sys.argv[1]) as f:
+    fields_text, ticket_text, nearby_text = f.read().strip().split('\n\n')
+
+fields = list(map(parse_field, fields_text.split('\n')))
+ticket = parse_ticket(ticket_text.split('\n')[1])
+nearby = np.array(list(map(parse_ticket, nearby_text.split('\n')[1:])))
+
 # 3D array containing whether a particular (field, ticket, column) is valid
-field_validity = np.array(list(map(lambda f: np.vectorize(lambda v: is_valid_field(f, v))(nearby), fields)))
+field_validity = np.array(list(map(lambda f: np.vectorize(lambda v: is_valid_field(f['limits'], v))(nearby), fields)))
 
 # 2D array containing whether a particular (ticket, column) has any valid fields
 any_field_validity = np.any(field_validity, axis=0)
 
-## Part 1: the sum of all values which cannot possibly be a valid field
+## Part 1
+
+# The sum of all values which cannot possibly be a valid field
 print(np.sum(np.logical_not(any_field_validity) * nearby))
 
 ## Part 2
@@ -51,7 +48,7 @@ field_column_validity = np.all(field_validity[:,is_ticket_valid,:], axis=1)
 counts = np.sum(field_column_validity, axis=1)
 
 # Taking the set of possible assignments, we can work out the order to assign columns to fields
-field_assignment_order = list(map(lambda p: p[1], sorted(map(lambda p: (p[1], p[0]), enumerate(counts)))))
+field_assignment_order = map(lambda p: p[1], sorted(map(lambda p: (p[1], p[0]), enumerate(counts))))
 
 # Our final mapping of fields to columns
 field_mapping = {}
@@ -64,7 +61,7 @@ for field in field_assignment_order:
     next_column = np.argmax(field_column_validity[field] * column_available)
 
     # Note the mapping for this field and that this column is unavailable for future assignments
-    field_mapping[fields[field][0]] = next_column
+    field_mapping[fields[field]['name']] = next_column
     column_available[next_column] = False
 
 # And finally a tedious bit of processing to get the answer
