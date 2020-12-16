@@ -54,7 +54,7 @@ counts = np.sum(field_column_validity, axis=1)
 field_assignment_order = list(map(lambda p: p[1], sorted(map(lambda p: (p[1], p[0]), enumerate(counts)))))
 
 # Our final mapping of fields to columns
-field_mapping = [None] * field_column_validity.shape[0]
+field_mapping = {}
 
 # Whether each column is still available for assignment
 column_available = [True] * field_column_validity.shape[1]
@@ -64,9 +64,8 @@ for field in field_assignment_order:
     next_column = np.argmax(field_column_validity[field] * column_available)
 
     # Note the mapping for this field and that this column is unavailable for future assignments
-    field_mapping[field] = next_column
+    field_mapping[fields[field][0]] = next_column
     column_available[next_column] = False
 
 # And finally a tedious bit of processing to get the answer
-# Could have cheated slightly here because the "departure" fields are the first 6 in my list anyway
-print(math.prod(map(lambda f: ticket[field_mapping[f]], map(lambda p: p[0], filter(lambda p: p[1][0].startswith('departure'), enumerate(fields))))))
+print(math.prod(map(lambda p: ticket[p[1]], filter(lambda p: p[0].startswith('departure'), field_mapping.items()))))
