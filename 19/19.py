@@ -6,44 +6,42 @@ import sys
 with open(sys.argv[1]) as f:
     rules_text, examples_text = f.read().strip().split('\n\n')
 
-def parse_rule(l):
-    return l.split(': ')
-
-rules = dict(map(parse_rule, rules_text.split('\n')))
+rules = dict(map(lambda l: l.split(': '), rules_text.split('\n')))
 examples = list(examples_text.split())
 
 def build_regexp(rule_text, rules):
     if rule_text == '"a"' or rule_text == '"b"':
         return rule_text[1]
     elif '|' in rule_text:
-        left, right = rule_text.split(' | ')
-        subrules = list(map(lambda rt: '(' + build_regexp(rt, rules) + ')', [left, right]))
-        return "({})|({})".format(*subrules)
+        subrules = map(lambda rt: build_regexp(rt, rules), rule_text.split(' | '))
+        return "{}|{}".format(*subrules)
     else:
-        subrules = list(map(lambda r: '(' + build_regexp(rules[r], rules) + ')', rule_text.split(' ')))
+        subrules = map(lambda r: '(' + build_regexp(rules[r], rules) + ')', rule_text.split(' '))
         return '(' + ''.join(subrules) + ')'
 
 # Part 1
 
-rule0_text = '^' + build_regexp(rules['0'], rules) + '$'
-rule0 = re.compile(rule0_text)
-
+rule0 = re.compile('^' + build_regexp(rules['0'], rules) + '$')
 print(sum(map(lambda e: re.match(rule0, e) != None, examples)))
 
 # Part 2
 
+MAX_REPEATS = 10
+
+def build_rule0(rule31, rule42, repeats):
+    rule8 = '(' + rule42 + ')+'
+    rule42s = ''.join([rule42] * repeats)
+    rule31s = ''.join([rule31] * repeats)
+    rule11 = '(' + rule42s + rule31s + ')'
+    return re.compile('^({})({})$'.format(rule8, rule11))
+    
 rule31 = '(' + build_regexp(rules['31'], rules) + ')'
 rule42 = '(' + build_regexp(rules['42'], rules) + ')'
-
-rule8 = '(' + rule42 + ')+'
+rule0s = [None] + list(map(lambda i: build_rule0(rule31, rule42, i), range(1, MAX_REPEATS)))
 
 def try_matches(example):
-    for i in range(1, 10):
-        rule42s = ''.join([rule42] * i)
-        rule31s = ''.join([rule31] * i)
-        rule11 = '(' + rule42s + rule31s + ')'
-        new_rule0_text = '^({})({})$'.format(rule8, rule11)
-        match = re.match(new_rule0_text, example)
+    for i in range(1, MAX_REPEATS):
+        match = re.match(rule0s[i], example)
         if match:
             return True
     return False
