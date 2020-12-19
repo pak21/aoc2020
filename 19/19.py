@@ -12,38 +12,29 @@ examples = list(examples_text.split())
 def build_regexp(rule_text, rules):
     if rule_text == '"a"' or rule_text == '"b"':
         return rule_text[1]
-    elif '|' in rule_text:
-        subrules = map(lambda rt: build_regexp(rt, rules), rule_text.split(' | '))
-        return "{}|{}".format(*subrules)
+    elif ' | ' in rule_text:
+        return '|'.join(map(lambda rt: build_regexp(rt, rules), rule_text.split(' | ')))
     else:
-        subrules = map(lambda r: '(' + build_regexp(rules[r], rules) + ')', rule_text.split(' '))
-        return '(' + ''.join(subrules) + ')'
+        return ''.join(map(lambda r: '(' + build_regexp(rules[r], rules) + ')', rule_text.split(' ')))
 
 # Part 1
 
-rule0 = re.compile('^' + build_regexp(rules['0'], rules) + '$')
-print(sum(map(lambda e: re.match(rule0, e) != None, examples)))
+rule0 = re.compile(build_regexp(rules['0'], rules))
+print(sum(map(lambda e: re.fullmatch(rule0, e) != None, examples)))
 
 # Part 2
 
 MAX_REPEATS = 10
 
 def build_rule0(rule31, rule42, repeats):
-    rule8 = '(' + rule42 + ')+'
-    rule42s = ''.join([rule42] * repeats)
-    rule31s = ''.join([rule31] * repeats)
-    rule11 = '(' + rule42s + rule31s + ')'
-    return re.compile('^({})({})$'.format(rule8, rule11))
+    rule8 = rule42 + '+'
+    rule42s = rule42 + '{' + str(repeats) + '}'
+    rule31s = rule31 + '{' + str(repeats) + '}'
+    rule11 = rule42s + rule31s
+    return re.compile(rule8 + rule11)
     
 rule31 = '(' + build_regexp(rules['31'], rules) + ')'
 rule42 = '(' + build_regexp(rules['42'], rules) + ')'
-rule0s = [None] + list(map(lambda i: build_rule0(rule31, rule42, i), range(1, MAX_REPEATS)))
+rule0s = list(map(lambda i: build_rule0(rule31, rule42, i), range(1, MAX_REPEATS)))
 
-def try_matches(example):
-    for i in range(1, MAX_REPEATS):
-        match = re.match(rule0s[i], example)
-        if match:
-            return True
-    return False
-
-print(sum(map(lambda e: try_matches(e), examples)))
+print(sum(map(lambda e: any(map(lambda r: re.fullmatch(r, e), rule0s)), examples)))
