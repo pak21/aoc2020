@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import collections
+import itertools
 import sys
 
 import numpy as np
@@ -39,12 +40,21 @@ def is_next_active(count, was_active):
 days = int(sys.argv[2])
 
 for i in range(days):
-    new_counts = collections.defaultdict(int)
-    for a in active:
-        for d in DIRECTIONS.values():
-            new_loc = np.array(a) + d
-            new_counts[tuple(new_loc)] += 1
-
-    active = set(map(lambda p: p[0], filter(lambda p: p[1], map(lambda p: (p[0], is_next_active(p[1], p[0] in active)), new_counts.items()))))
-
-print(len(active))
+    active = set(
+        map(
+            lambda p: p[0],
+            filter(
+                lambda p: p[1],
+                map(
+                    lambda p: (p[0], is_next_active(p[1], p[0] in active)),
+                    collections.Counter(
+                        map(
+                            lambda p: tuple(np.array(p[0]) + p[1]),
+                            itertools.product(active, DIRECTIONS.values())
+                        )
+                    ).items()
+                )
+            )
+        )
+    )
+    print(len(active))
