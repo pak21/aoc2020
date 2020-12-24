@@ -24,9 +24,20 @@ def parse_line(l):
             current = ''
 
 with open(sys.argv[1]) as f:
-    ends = map(lambda l: tuple(sum(parse_line(l.strip()))), f.readlines())
-
-active = set(map(lambda p: p[0], filter(lambda p: p[1] % 2 == 1, collections.Counter(ends).items())))
+    active = set(
+        map(
+            lambda p: p[0],
+            filter(
+                lambda p: p[1] % 2 == 1,
+                collections.Counter(
+                    map(
+                        lambda l: tuple(sum(parse_line(l.strip()))),
+                        f.readlines()
+                    )
+                ).items()
+            )
+        )
+    )
 
 # Part 1
 
